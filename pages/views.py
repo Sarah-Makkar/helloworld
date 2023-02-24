@@ -4,10 +4,11 @@ from django.http import Http404
 from django.urls import reverse
 from django.views.generic import TemplateView
 
+
 def homePageView(request):
     # return request object and specify page.
     return render(request, 'home.html', {
-        'mynumbers':[1,2,3,4,5,6,],
+        'mynumbers': [1, 2, 3, 4, 5, 6, ],
         'firstName': 'Sarah',
         'lastName': 'Makkar'})
 
@@ -15,6 +16,7 @@ def homePageView(request):
 def aboutPageView(request):
     # return request object and specify page.
     return render(request, 'about.html')
+
 
 def sarahPageView(request):
     # return request object and specify page.
@@ -52,7 +54,30 @@ def homePost(request):
         return HttpResponseRedirect(reverse('results', kwargs={'choice': choice, 'gmat': gmat}, ))
 
 
+import pickle
+import sklearn  # You must perform a pip install.
+import pandas as pd
+
+
 def results(request, choice, gmat):
     print("*** Inside reults()")
-    return render(request, 'results.html', {'choice': choice, 'gmat': gmat})
+    # load saved model
+    with open('../model.pkl', 'rb') as f:
+        loadedModel = pickle.load(f)
 
+    # Create a single prediction.
+    singleSampleDf = pd.DataFrame(columns=['gmat', 'work_experience'])
+
+    workExperience = float(choice)
+    print("*** GMAT Score: " + str(gmat))
+    print("*** Years experience: " + str(workExperience))
+    singleSampleDf = singleSampleDf.append({'gmat': gmat,
+                                            'work_experience': workExperience},
+                                           ignore_index=True)
+
+    singlePrediction = loadedModel.predict(singleSampleDf)
+
+    print("Single prediction: " + str(singlePrediction))
+
+    return render(request, 'results.html', {'choice': workExperience, 'gmat': gmat,
+                                            'prediction': singlePrediction})
